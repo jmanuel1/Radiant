@@ -9,8 +9,17 @@ import {
   View,
   Image,
   ImageBackground,
+  Dimensions,
 } from 'react-native';
 import styles from './ForecastView-styles.js';
+import {
+  LineChart,
+  BarChart,
+  PieChart,
+  ProgressChart,
+  ContributionGraph,
+  StackedBarChart
+} from "react-native-chart-kit";
 
 export default function ({location}) {
   const [series, loading] = useIrradianceData(location);
@@ -18,7 +27,43 @@ export default function ({location}) {
     return <Loading/>;
   }
   console.log(series);
-  return <Text style={styles.whiteText}>{JSON.stringify(series)}</Text>;
+  return (
+    <LineChart
+      data={{
+        labels: [...series.keys()],
+        datasets: [
+          {
+            data: [...series.values()]
+          }
+        ]
+      }}
+      width={Dimensions.get('window').width}
+      height={220}
+      yAxisInterval={6.5}
+      hidePointsAtIndex={ Array.from({length: [...series.keys()].length}, (v, k) => (k%13 === 0) ? null : k) }
+      chartConfig={{
+        backgroundColor: '#ffffff',
+        backgroundGradientFrom: "#ffffff",
+        backgroundGradientTo: "#ffffff",
+        decimalPlaces: 2, // optional, defaults to 2dp
+        color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+        style: {
+          borderRadius: 16
+        },
+        propsForDots: {
+          r: "3",
+          strokeWidth: "2",
+          stroke: "#000000"
+        }
+      }}
+      bezier
+      style={{
+        marginVertical: 8,
+        borderRadius: 16
+      }}
+    />
+  );
 }
 
 function useIrradianceData(location) {

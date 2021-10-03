@@ -13,7 +13,9 @@
     "react": "16.8.0",
     "react-dom": "16.8.0",
     "react-native": "0.59.8",
+    "react-native-chart-kit": "^6.11.0",
     "react-native-iconic-font": "0.0.6",
+    "react-native-svg": "^12.1.1",
     "react-native-unimodules": "^0.14.8",
     "react-native-web": "^0.11"
   },
