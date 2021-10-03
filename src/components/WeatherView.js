@@ -2,10 +2,11 @@
 
 import React, { Component } from 'react';
 import {
-  ActivityIndicatorIOS,
+  ActivityIndicator,
   Text,
   View,
-  Image
+  Image,
+  ImageBackground,
 } from 'react-native';
 
 import weathericons from 'react-native-iconic-font/weathericons';
@@ -33,7 +34,7 @@ class WeatherView extends Component {
 
   render() {
     return (
-      <Image style={styles.backgroundImage} source={require('../../img/background.png')}>
+      <ImageBackground style={styles.backgroundImage} source={require('../../img/background.png')}>
         <View style={styles.container}>
           {this.getSpinner()}
           {this.getMessageView()}
@@ -53,13 +54,13 @@ class WeatherView extends Component {
             <ForecastView style={styles.forecast} forecast={this.state.forecasts[3]}/>
           </View>
         </View>
-      </Image>
+      </ImageBackground>
     );
   }
 
   getSpinner() {
     return this.state.isLoading ?
-      ( <ActivityIndicatorIOS
+      ( <ActivityIndicator
           hidden='false'
           size='large'/> ) :
       ( <View/> );
