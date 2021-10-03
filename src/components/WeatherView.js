@@ -12,6 +12,7 @@ import {
 import weathericons from 'react-native-iconic-font/weathericons';
 import moment from 'moment';
 import ForecastView from './ForecastView';
+import SolarIrradianceTimeSeries from './SolarIrradianceTimeSeries';
 
 import styles from './WeatherView-styles';
 
@@ -48,10 +49,11 @@ class WeatherView extends Component {
             {this.state.temperature}
           </Text>
           <View style={styles.forecastContainer}>
-            <ForecastView style={styles.forecast} forecast={this.state.forecasts[0]}/>
+            {/*<ForecastView style={styles.forecast} forecast={this.state.forecasts[0]}/>
             <ForecastView style={styles.forecast} forecast={this.state.forecasts[1]}/>
             <ForecastView style={styles.forecast} forecast={this.state.forecasts[2]}/>
-            <ForecastView style={styles.forecast} forecast={this.state.forecasts[3]}/>
+            <ForecastView style={styles.forecast} forecast={this.state.forecasts[3]}/>*/}
+            {this.state.location && <SolarIrradianceTimeSeries style={styles.forecast} location={this.state.location}/>}
           </View>
         </View>
       </ImageBackground>
@@ -75,6 +77,7 @@ class WeatherView extends Component {
   startLocationSearch() {
     navigator.geolocation.getCurrentPosition(
       location => {
+        this.setState({location});
         this.queryOpenWeatherMap(location);
       },
       error => {
