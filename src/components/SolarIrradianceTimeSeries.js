@@ -17,6 +17,7 @@ export default function ({location}) {
   if (loading) {
     return <Loading/>;
   }
+  console.log(series);
   return <Text style={styles.whiteText}>{JSON.stringify(series)}</Text>;
 }
 
@@ -28,9 +29,33 @@ function useIrradianceData(location) {
   useEffect(() => {
     const url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${location.coords.longitude}&latitude=${location.coords.latitude}&start=${aYearAgo.format('YYYYMMDD')}&end=${today.format('YYYYMMDD')}&format=JSON`;
     fetch(url).then(r => r.json()).then(data => {
-      setSeries(data);
+      setSeries(computeWeeklyAverage(data.properties.parameter.ALLSKY_SFC_SW_DWN));
       setLoading(false);
     });
   }, [location.coords.longitude, location.coords.latitude]);
   return [series, loading];
+}
+
+function computeWeeklyAverage(dailyPoints) {
+  const totalsByWeek = new Map();
+  const countByWeek = new Map();
+  for (let date in dailyPoints) {
+    if (dailyPoints[date] < 0) {
+      continue;
+    }
+    const week = moment(date, 'YYYYMMDD').format('YYYY-ww');
+    console.log(date, week);
+    if (!totalsByWeek.has(week)) {
+      totalsByWeek.set(week, 0);
+      countByWeek.set(week, 0);
+    }
+    totalsByWeek.set(week, totalsByWeek.get(week) + dailyPoints[date]);
+    countByWeek.set(week, countByWeek.get(week) + 1);
+  }
+  console.log(countByWeek);
+  const averageByWeek = new Map();
+  for (let week of totalsByWeek.keys()) {
+    averageByWeek.set(week, totalsByWeek.get(week)/countByWeek.get(week));
+  }
+  return averageByWeek;
 }
