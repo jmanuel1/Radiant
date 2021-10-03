@@ -8,6 +8,7 @@ const { width } = Dimensions.get('window');
 export default StyleSheet.create({
   backgroundImage: {
     alignSelf: 'center',
+    height: '100vh',
   },
   container: {
     flex: 1,
