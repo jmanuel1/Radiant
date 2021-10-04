@@ -21,8 +21,8 @@ import {
   StackedBarChart
 } from "react-native-chart-kit";
 
-export default function ({location, temporalResolution}) {
-  const [series, loading] = useIrradianceData(location, temporalResolution);
+export default function ({location, temporalResolution, startDate, endDate}) {
+  const [series, loading] = useIrradianceData(location, temporalResolution, startDate, endDate);
   if (loading) {
     return <Loading/>;
   }
@@ -74,22 +74,12 @@ export default function ({location, temporalResolution}) {
   );
 }
 
-function useIrradianceData(location, temporalResolution) {
-  const today = moment();
-  const aYearAgo = today.clone().subtract(1, 'year');
+function useIrradianceData(location, temporalResolution, startDate, endDate) {
   const [loading, setLoading] = useState(true);
   const [series, setSeries] = useState(null);
-  // const temporalResolutionMapping = {
-  //   'week': 'daily',
-  //   'month':
-  // }
   useEffect(() => {
     let url;
-    // if (temporalResolution === 'week') {
-      url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${location.coords.longitude}&latitude=${location.coords.latitude}&start=${aYearAgo.format('YYYYMMDD')}&end=${today.format('YYYYMMDD')}&format=JSON`;
-    // } else if (temporalResolution === 'month') {
-      // url = `https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${location.coords.latitude}&latitude=${location.coords.longitude}&format=JSON&start=${aYearAgo.year()}&end=${today.year()}`
-    // }
+    url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${location.coords.longitude}&latitude=${location.coords.latitude}&start=${startDate.format('YYYYMMDD')}&end=${endDate.format('YYYYMMDD')}&format=JSON`;
 
     setLoading(true);
     fetch(url).then(r => r.json()).then(data => {
@@ -100,7 +90,7 @@ function useIrradianceData(location, temporalResolution) {
       }
       setLoading(false);
     });
-  }, [location.coords.longitude, location.coords.latitude, temporalResolution]);
+  }, [location.coords.longitude, location.coords.latitude, temporalResolution, startDate.toISOString(), endDate.toISOString()]);
   return [series, loading];
 }
 

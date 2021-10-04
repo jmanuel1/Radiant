@@ -9,6 +9,8 @@ import {
   ImageBackground,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
+import { DatePickerModal } from 'react-native-paper-dates';
+import { Button } from 'react-native-paper';
 
 import weathericons from 'react-native-iconic-font/weathericons';
 import moment from 'moment';
@@ -33,6 +35,9 @@ class WeatherView extends Component {
       isLoading: true,
       message: '',
       temporalResolution: 'week',
+      startDate: moment().subtract(1, 'year'),
+      endDate: moment(),
+      isDateRangeOpen: false,
     };
   }
 
@@ -58,12 +63,36 @@ class WeatherView extends Component {
           >
             {temporalResolutions.map(item => <Picker.Item label={item.value} value={item.data}/>)}
           </Picker>
+          <Button onPress={() => this.setState({isDateRangeOpen: true})} uppercase={false} mode="outlined">
+            Pick range
+          </Button>
+          <DatePickerModal
+            mode="range"
+            visible={this.state.isDateRangeOpen}
+            onDismiss={() => this._onDateRangeDismiss()}
+            startDate={this.state.startDate.toDate()}
+            endDate={this.state.endDate.toDate()}
+            onConfirm={range => this._onDateRangeConfirm(range)}
+            validRange={{
+              endDate: moment().toDate(),
+            }}
+          />
           <View style={styles.forecastContainer}>
-            {this.state.location && <SolarIrradianceTimeSeries style={styles.forecast} location={this.state.location} temporalResolution={this.state.temporalResolution}/>}
+            {this.state.location && <SolarIrradianceTimeSeries style={styles.forecast} location={this.state.location} temporalResolution={this.state.temporalResolution} startDate={this.state.startDate} endDate={this.state.endDate}/>}
           </View>
         </View>
       </ImageBackground>
     );
+  }
+
+  _onDateRangeDismiss() {
+    this.setState({isDateRangeOpen: false});
+  }
+
+  _onDateRangeConfirm(range) {
+    console.log(range);
+    const {startDate, endDate} = range;
+    this.setState({startDate: moment(startDate), endDate: moment(endDate), isDateRangeOpen: false});
   }
 
   getSpinner() {
