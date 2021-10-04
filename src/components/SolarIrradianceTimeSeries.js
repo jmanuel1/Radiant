@@ -21,10 +21,18 @@ import {
   StackedBarChart
 } from "react-native-chart-kit";
 
-export default function ({location}) {
-  const [series, loading] = useIrradianceData(location);
+export default function ({location, temporalResolution}) {
+  const [series, loading] = useIrradianceData(location, temporalResolution);
   if (loading) {
     return <Loading/>;
+  }
+  const yAxisIntervals = {
+    week: 6.5,
+    month: 1,
+  };
+  let pointsToHideByIndex = Array.from({length: [...series.keys()].length}, (v, k) => (k%2 === 0) ? null : k);
+  if (temporalResolution === 'week') {
+    pointsToHideByIndex = Array.from({length: [...series.keys()].length}, (v, k) => (k%13 === 0) ? null : k)
   }
   console.log(series);
   return (
@@ -39,8 +47,8 @@ export default function ({location}) {
       }}
       width={Dimensions.get('window').width}
       height={220}
-      yAxisInterval={6.5}
-      hidePointsAtIndex={ Array.from({length: [...series.keys()].length}, (v, k) => (k%13 === 0) ? null : k) }
+      yAxisInterval={yAxisIntervals[temporalResolution]}
+      hidePointsAtIndex={pointsToHideByIndex}
       chartConfig={{
         backgroundColor: '#ffffff',
         backgroundGradientFrom: "#ffffff",
@@ -66,18 +74,33 @@ export default function ({location}) {
   );
 }
 
-function useIrradianceData(location) {
+function useIrradianceData(location, temporalResolution) {
   const today = moment();
   const aYearAgo = today.clone().subtract(1, 'year');
   const [loading, setLoading] = useState(true);
   const [series, setSeries] = useState(null);
+  // const temporalResolutionMapping = {
+  //   'week': 'daily',
+  //   'month':
+  // }
   useEffect(() => {
-    const url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${location.coords.longitude}&latitude=${location.coords.latitude}&start=${aYearAgo.format('YYYYMMDD')}&end=${today.format('YYYYMMDD')}&format=JSON`;
+    let url;
+    // if (temporalResolution === 'week') {
+      url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${location.coords.longitude}&latitude=${location.coords.latitude}&start=${aYearAgo.format('YYYYMMDD')}&end=${today.format('YYYYMMDD')}&format=JSON`;
+    // } else if (temporalResolution === 'month') {
+      // url = `https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${location.coords.latitude}&latitude=${location.coords.longitude}&format=JSON&start=${aYearAgo.year()}&end=${today.year()}`
+    // }
+
+    setLoading(true);
     fetch(url).then(r => r.json()).then(data => {
-      setSeries(computeWeeklyAverage(data.properties.parameter.ALLSKY_SFC_SW_DWN));
+      if (temporalResolution === 'week') {
+        setSeries(computeWeeklyAverage(data.properties.parameter.ALLSKY_SFC_SW_DWN));
+      } else if (temporalResolution === 'month') {
+        setSeries(computeMonthlyAverage(data.properties.parameter.ALLSKY_SFC_SW_DWN));
+      }
       setLoading(false);
     });
-  }, [location.coords.longitude, location.coords.latitude]);
+  }, [location.coords.longitude, location.coords.latitude, temporalResolution]);
   return [series, loading];
 }
 
@@ -103,4 +126,26 @@ function computeWeeklyAverage(dailyPoints) {
     averageByWeek.set(week, totalsByWeek.get(week)/countByWeek.get(week));
   }
   return averageByWeek;
+}
+
+function computeMonthlyAverage(dailyPoints) {
+  const totalsByMonth = new Map();
+  const countByMonth = new Map();
+  for (let date in dailyPoints) {
+    if (dailyPoints[date] < 0) {
+      continue;
+    }
+    const month = moment(date, 'YYYYMMDD').format('YYYY-MM');
+    if (!totalsByMonth.has(month)) {
+      totalsByMonth.set(month, 0);
+      countByMonth.set(month, 0);
+    }
+    totalsByMonth.set(month, totalsByMonth.get(month) + dailyPoints[date]);
+    countByMonth.set(month, countByMonth.get(month) + 1);
+  }
+  const averageByMonth = new Map();
+  for (let month of totalsByMonth.keys()) {
+    averageByMonth.set(month, totalsByMonth.get(month)/countByMonth.get(month));
+  }
+  return averageByMonth;
 }

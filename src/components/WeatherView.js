@@ -8,6 +8,7 @@ import {
   Image,
   ImageBackground,
 } from 'react-native';
+import {Picker} from '@react-native-picker/picker';
 
 import weathericons from 'react-native-iconic-font/weathericons';
 import moment from 'moment';
@@ -15,6 +16,11 @@ import ForecastView from './ForecastView';
 import SolarIrradianceTimeSeries from './SolarIrradianceTimeSeries';
 
 import styles from './WeatherView-styles';
+
+const temporalResolutions = [
+  {id: 0, value: 'Weekly', data: 'week'},
+  {id: 1, value: 'Monthly', data: 'month'}
+];
 
 class WeatherView extends Component {
   constructor(props) {
@@ -25,7 +31,8 @@ class WeatherView extends Component {
       icon: '',
       forecasts: [],
       isLoading: true,
-      message: ''
+      message: '',
+      temporalResolution: 'week',
     };
   }
 
@@ -45,15 +52,14 @@ class WeatherView extends Component {
           <Text style={[styles.icon, styles.whiteText]}>
             {this.state.icon}
           </Text>
-          <Text style={[styles.temperature, styles.whiteText]}>
-            {this.state.temperature}
-          </Text>
+          <Picker
+            selectedValue={this.state.temporalResolution}
+            onValueChange={(value) => this.setState({temporalResolution: value})}
+          >
+            {temporalResolutions.map(item => <Picker.Item label={item.value} value={item.data}/>)}
+          </Picker>
           <View style={styles.forecastContainer}>
-            {/*<ForecastView style={styles.forecast} forecast={this.state.forecasts[0]}/>
-            <ForecastView style={styles.forecast} forecast={this.state.forecasts[1]}/>
-            <ForecastView style={styles.forecast} forecast={this.state.forecasts[2]}/>
-            <ForecastView style={styles.forecast} forecast={this.state.forecasts[3]}/>*/}
-            {this.state.location && <SolarIrradianceTimeSeries style={styles.forecast} location={this.state.location}/>}
+            {this.state.location && <SolarIrradianceTimeSeries style={styles.forecast} location={this.state.location} temporalResolution={this.state.temporalResolution}/>}
           </View>
         </View>
       </ImageBackground>
