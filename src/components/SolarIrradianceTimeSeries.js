@@ -80,16 +80,25 @@ function useIrradianceData(location, temporalResolution, startDate, endDate) {
   useEffect(() => {
     let url;
     url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${location.coords.longitude}&latitude=${location.coords.latitude}&start=${startDate.format('YYYYMMDD')}&end=${endDate.format('YYYYMMDD')}&format=JSON`;
+    const USE_PREDOWNLOADED_DATA = false;
 
     setLoading(true);
-    fetch(url).then(r => r.json()).then(data => {
+
+    if (USE_PREDOWNLOADED_DATA) {
+      import('../../data/predownloaded-irradiance-data.json').then(onDataReceived);
+      return;
+    }
+
+    fetch(url).then(r => r.json()).then(onDataReceived).catch(err => console.table(err));
+
+    function onDataReceived(data) {
       if (temporalResolution === 'week') {
         setSeries(computeWeeklyAverage(data.properties.parameter.ALLSKY_SFC_SW_DWN));
       } else if (temporalResolution === 'month') {
         setSeries(computeMonthlyAverage(data.properties.parameter.ALLSKY_SFC_SW_DWN));
       }
       setLoading(false);
-    });
+    }
   }, [location.coords.longitude, location.coords.latitude, temporalResolution, startDate.toISOString(), endDate.toISOString()]);
   return [series, loading];
 }
