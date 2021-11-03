@@ -20,9 +20,27 @@ export default function ({location, temporalResolution, startDate, endDate}) {
     return <Loading/>;
   }
   const points = [...series.entries()].sort(([ka, va],[kb, vb]) => {
-    return moment(ka, 'gggg-ww').toDate() - moment(kb, 'gggg-ww').toDate()
+    return ka - kb;
   });
-  const labels = points.map(([key, value]) => moment(key, 'gggg-ww').format('MMM D, YYYY'));
+
+  let xAxisLabel = `First day of ${temporalResolution}`;
+  let xAxisTickCount = 3;
+  if (temporalResolution === 'month') {
+    xAxisLabel = 'Month';
+    xAxisTickCount = 6;
+  }
+
+  function tickFormat(tick) {
+    switch (temporalResolution) {
+      case 'month': {
+        return moment.unix(tick).format('MMM');
+      }
+      default: {
+        return moment.unix(tick).format('MMM D, YYYY');
+      }
+    }
+  }
+
   return (
     <View style={[styles.container, {backgroundColor: '#ffffff', flex: 0.9}]}>
       <VictoryChart
@@ -32,7 +50,7 @@ export default function ({location, temporalResolution, startDate, endDate}) {
         <VictoryLine
           data={points.map(([key, value]) => ({x: key, y: value}))}
         />
-        <VictoryAxis tickCount={3} tickFormat={tick => moment(tick, 'gggg-ww').format('MMM D, YYYY')} label='First day of week'/>
+        <VictoryAxis tickCount={xAxisTickCount} tickFormat={tickFormat} label={xAxisLabel}/>
         <VictoryAxis
           dependentAxis
           label={'Kilowatt-hours received from the Sun\nper square meter per day'}
@@ -82,8 +100,7 @@ function computeWeeklyAverage(dailyPoints) {
     if (dailyPoints[date] < 0) {
       continue;
     }
-    const week = moment(date, 'YYYYMMDD').format('YYYY-ww');
-    console.log(date, week);
+    const week = moment(date, 'YYYYMMDD').format('gggg-ww');
     if (!totalsByWeek.has(week)) {
       totalsByWeek.set(week, 0);
       countByWeek.set(week, 0);
@@ -94,7 +111,7 @@ function computeWeeklyAverage(dailyPoints) {
   console.log(countByWeek);
   const averageByWeek = new Map();
   for (let week of totalsByWeek.keys()) {
-    averageByWeek.set(week, totalsByWeek.get(week)/countByWeek.get(week));
+    averageByWeek.set(moment(week, 'gggg-ww').unix(), totalsByWeek.get(week)/countByWeek.get(week));
   }
   return averageByWeek;
 }
@@ -116,7 +133,7 @@ function computeMonthlyAverage(dailyPoints) {
   }
   const averageByMonth = new Map();
   for (let month of totalsByMonth.keys()) {
-    averageByMonth.set(month, totalsByMonth.get(month)/countByMonth.get(month));
+    averageByMonth.set(moment(month, 'YYYY-MM').unix(), totalsByMonth.get(month)/countByMonth.get(month));
   }
   return averageByMonth;
 }
