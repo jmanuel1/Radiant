@@ -12,65 +12,37 @@ import {
   Dimensions,
 } from 'react-native';
 import styles from './ForecastView-styles.js';
-import {
-  LineChart,
-  BarChart,
-  PieChart,
-  ProgressChart,
-  ContributionGraph,
-  StackedBarChart
-} from "react-native-chart-kit";
+import {VictoryChart, VictoryLine, VictoryAxis, VictoryLabel, VictoryPortal} from 'victory';
 
 export default function ({location, temporalResolution, startDate, endDate}) {
   const [series, loading] = useIrradianceData(location, temporalResolution, startDate, endDate);
   if (loading) {
     return <Loading/>;
   }
-  const yAxisIntervals = {
-    week: 6.5,
-    month: 1,
-  };
-  let pointsToHideByIndex = Array.from({length: [...series.keys()].length}, (v, k) => (k%2 === 0) ? null : k);
-  if (temporalResolution === 'week') {
-    pointsToHideByIndex = Array.from({length: [...series.keys()].length}, (v, k) => (k%13 === 0) ? null : k)
-  }
-  console.log(series);
+  const points = [...series.entries()].sort(([ka, va],[kb, vb]) => {
+    return moment(ka, 'gggg-ww').toDate() - moment(kb, 'gggg-ww').toDate()
+  });
+  const labels = points.map(([key, value]) => moment(key, 'gggg-ww').format('MMM D, YYYY'));
   return (
-    <LineChart
-      data={{
-        labels: [...series.keys()],
-        datasets: [
-          {
-            data: [...series.values()]
-          }
-        ]
-      }}
-      width={Dimensions.get('window').width}
-      height={220}
-      yAxisInterval={yAxisIntervals[temporalResolution]}
-      hidePointsAtIndex={pointsToHideByIndex}
-      chartConfig={{
-        backgroundColor: '#ffffff',
-        backgroundGradientFrom: "#ffffff",
-        backgroundGradientTo: "#ffffff",
-        decimalPlaces: 2, // optional, defaults to 2dp
-        color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-        style: {
-          borderRadius: 16
-        },
-        propsForDots: {
-          r: "3",
-          strokeWidth: "2",
-          stroke: "#000000"
-        }
-      }}
-      bezier
-      style={{
-        marginVertical: 8,
-        borderRadius: 16
-      }}
-    />
+    <View style={[styles.container, {backgroundColor: '#ffffff', flex: 0.9}]}>
+      <VictoryChart
+        width={Dimensions.get('window').width}
+        height={330}
+      >
+        <VictoryLine
+          data={points.map(([key, value]) => ({x: key, y: value}))}
+        />
+        <VictoryAxis tickCount={3} tickFormat={tick => moment(tick, 'gggg-ww').format('MMM D, YYYY')} label='First day of week'/>
+        <VictoryAxis
+          dependentAxis
+          label={'Kilowatt-hours received from the Sun\nper square meter per day'}
+          style={{
+            axisLabel: {padding: 40}
+          }}
+          axisLabelComponent={<VictoryPortal><VictoryLabel/></VictoryPortal>}
+        />
+      </VictoryChart>
+    </View>
   );
 }
 

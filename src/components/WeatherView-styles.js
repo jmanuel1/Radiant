@@ -9,6 +9,7 @@ export default StyleSheet.create({
   backgroundImage: {
     alignSelf: 'center',
     height: '100vh',
+    width: '100vw',
   },
   container: {
     flex: 1,
@@ -35,6 +36,7 @@ export default StyleSheet.create({
     width: width,
     flexDirection: 'row',
     justifyContent: 'space-around',
+    backgroundColor: '#ffffff'
   },
   forecast: {
     flex: 1,
